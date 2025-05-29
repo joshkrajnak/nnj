@@ -14,23 +14,35 @@
         href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
   <link crossorigin="anonymous"
         href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <header>
     <nav class="main-nav">
-      <div class="nav-links">
-        <a href="/" class="nav-link active">Live Stats</a>
-        <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
-        <a href="/tournaments.html" class="nav-link">Tournaments</a>
-      </div>
-      <a href="https://tiktok.com/notnotjosh_" target="_blank"
-         class="notnotjosh-btn">NotNotJosh</a>
+      <!-- Mobile toggle -->
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span>
+      </button>
+
+      <!-- Main links -->
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link active">Live Stats</a></li>
+        <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
+        <li><a href="/tournaments.html" class="nav-link">Tournaments</a></li>
+      </ul>
+
+      <!-- TikTok button on the right -->
+      <a href="https://tiktok.com/notnotjosh_" target="_blank" class="notnotjosh-btn">
+        NotNotJosh
+      </a>
     </nav>
   </header>
 
   <main>
+    <!-- (You can remove this empty H1 if not needed) -->
     <h1 class="hero-title" style="margin-top:100px;"></h1>
+
     <section class="hero">
       <div id="live-status" class="live-status">
         <span class="live-dot"></span> Offline
@@ -45,18 +57,24 @@
       <div class="live-leaderboard">
         <table>
           <thead>
-            <tr><th>Rank</th><th>User</th><th>Likes</th></tr>
+            <tr>
+              <th>Rank</th>
+              <th>User</th>
+              <th>Likes</th>
+            </tr>
           </thead>
           <tbody id="session-body">
             <!-- Populated by main.js -->
           </tbody>
         </table>
       </div>
-
+    </section> <!-- <-- Added closing tag -->
 
   </main>
 
+  <!-- Socket.IO client -->
   <script src="/socket.io/socket.io.js"></script>
-  <script src="main.js"></script>
+  <!-- Your main logic -->
+  <script src="/main.js"></script>
 </body>
 </html>
