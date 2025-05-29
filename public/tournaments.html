@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tournaments | NotNotJosh</title>
+
+  <!-- Inter font -->
+  <link as="font" crossorigin="anonymous"
+        href="https://components.unrealengine.com/fonts/inter/Inter-Regular.woff2" rel="preload">
+  <link as="font" crossorigin="anonymous"
+        href="https://components.unrealengine.com/fonts/inter/Inter-Medium.woff2" rel="preload">
+  <link as="style" crossorigin="anonymous"
+        href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
+  <link crossorigin="anonymous"
+        href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav class="main-nav">
+      <div class="nav-links">
+        <a href="/" class="nav-link">Live Stats</a>
+        <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
+        <a href="/tournaments.html" class="nav-link active">Tournaments</a>
+      </div>
+      <a href="https://tiktok.com/notnotjosh_" target="_blank"
+         class="notnotjosh-btn">NotNotJosh</a>
+    </nav>
+  </header>
+
+  <main class="p-6 pt-24">
+    <h1 class="hero-title">Tournaments</h1>
+
+    <!-- Tournament List -->
+    <div id="tourney-list" class="space-y-4 mb-12"></div>
+
+    <!-- Tournament Detail -->
+    <div id="tourney-detail" class="hidden space-y-6"></div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="tournaments.js"></script>
+</body>
+</html>

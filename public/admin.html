@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Manage Queue</title>
+  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Regular.woff2" rel="preload">
+  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Medium.woff2" rel="preload">
+  <link as="style" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
+  <link crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav class="main-nav">
+      <div class="nav-links">
+        <a href="/" class="nav-link">Live Stats</a>
+        <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
+        <a href="/tournaments.html" class="nav-link">Tournaments</a>
+      </div>
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1 style="margin-top:100px; text-align:center; color:#fff; font-size:1.8rem; font-weight:700;">
+      Admin: Manage Queue
+    </h1>
+    <ul id="admin-queue-list" style="max-width:500px; margin:20px auto; padding:0; list-style:none;">
+      <!-- Admin queue items render here -->
+    </ul>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
