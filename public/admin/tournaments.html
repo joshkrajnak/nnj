@@ -2,49 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin – Tournaments | NotNotJosh</title>
-
-  <!-- Inter font -->
-  <link as="font" crossorigin="anonymous"
-        href="https://components.unrealengine.com/fonts/inter/Inter-Regular.woff2" rel="preload">
-  <link as="font" crossorigin="anonymous"
-        href="https://components.unrealengine.com/fonts/inter/Inter-Medium.woff2" rel="preload">
-  <link as="style" crossorigin="anonymous"
-        href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
-  <link crossorigin="anonymous"
-        href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
-
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin – Manage Tournaments</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+  <!-- Reuse the same header -->
   <header>
     <nav class="main-nav">
-      <div class="nav-links">
-        <a href="/" class="nav-link">Live Stats</a>
-        <a href="/leaderboard.html" class="nav-link">Leaderboard</a>
-        <a href="/tournaments.html" class="nav-link">Tournaments</a>
-      </div>
-      <a href="https://tiktok.com/notnotjosh_" target="_blank"
-         class="notnotjosh-btn">NotNotJosh</a>
+      <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
+      <ul class="nav-links">
+        <li><a href="/admin/live.html" class="nav-link">Live Stats</a></li>
+        <li><a href="/admin/leaderboard.html" class="nav-link">Leaderboard</a></li>
+        <li><a href="/admin/tournaments.html" class="nav-link active">Tournaments</a></li>
+      </ul>
+      <a href="https://tiktok.com/notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
     </nav>
   </header>
 
-  <main class="p-6 pt-24">
-    <h1 class="hero-title">Admin – Manage Tournaments</h1>
+  <main>
+    <h1>Admin – Manage Tournaments</h1>
 
-    <!-- Create new tournament -->
-    <form id="new-tourney-form" class="mb-8 flex gap-2">
-      <input id="new-name" placeholder="Tournament Name"
-             class="p-2 rounded-md flex-grow text-black"/>
-      <button type="submit" class="join-btn">Create</button>
-    </form>
+    <!-- Select tournament -->
+    <label for="tourney-select">Tournament:</label>
+    <select id="tourney-select">
+      <!-- Populated by JS -->
+    </select>
 
-    <!-- Admin list -->
-    <div id="admin-list" class="space-y-4"></div>
+    <!-- Participant management -->
+    <section id="participants-section">
+      <h2>Participants</h2>
+      <div class="form-row">
+        <input id="new-participant" type="text" placeholder="TikTok username">
+        <button id="add-participant-btn">Add</button>
+      </div>
+      <ul id="participant-list">
+        <!-- Populated by JS -->
+      </ul>
+    </section>
+
+    <!-- Bracket / Rounds -->
+    <section id="bracket-section">
+      <h2>Bracket</h2>
+      <button id="generate-bracket-btn">Generate Bracket</button>
+      <div id="rounds-container">
+        <!-- Rounds & matches populated by JS -->
+      </div>
+      <button id="advance-btn">Advance Round</button>
+    </section>
   </main>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="tournaments-admin.js"></script>
+    <!-- before </body> -->
+<script src="./tournaments-admin.js"></script>
+
 </body>
 </html>

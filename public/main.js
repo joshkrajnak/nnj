@@ -1,4 +1,14 @@
 // public/main.js
+
+// === Suppress TikTok One‑Tap RPC failures ===
+window.addEventListener('unhandledrejection', event => {
+  const err = event.reason;
+  if (err && err.data?.method === 'PUBLIC_GetOneTapSettings') {
+    console.debug('Ignored TikTok one‑tap error:', err.message);
+    event.preventDefault();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -6,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function safeRender(id, rowsHtml) {
     const el = document.getElementById(id);
     if (!el) {
-      // console.warn(`Element #${id} not found; skipping render.`);
+      console.warn(`Element #${id} not found; skipping render.`);
       return;
     }
     el.innerHTML = rowsHtml;
@@ -24,13 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     safeRender('session-body', rows);
   }
 
-  // If you ever add an all-time section here, you can do:
-  // function renderAllTime(list) { … safeRender('all-time-body', …) }
-
+  // Listen for live stats updates
   socket.on('live-stats', list => {
     renderSession(list);
   });
 
-  // Optionally emit a request to get the latest on connect
+  // Ensure we subscribe on connect
   socket.emit('subscribe-live');
 });
