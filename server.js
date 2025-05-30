@@ -1,306 +1,189 @@
 // server.js
+
 require('dotenv').config();
-const fs                 = require('fs');
-const path               = require('path');
-const express            = require('express');
-const http               = require('http');
-const basicAuth          = require('express-basic-auth');
-const mongoose           = require('mongoose');
-const bodyParser         = require('body-parser');
-const { Server }         = require('socket.io');
-const { WebcastPushConnection } = require('tiktok-live-connector');
-const Tournament         = require('./models/Tournament');
+const express = require('express');
+const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
+const http = require('http');
+const session = require('express-session');
+const { Server } = require('socket.io');
+const Tournament = require('./models/Tournament');
 
-const app    = express();
+const app = express();
 const server = http.createServer(app);
-const io     = new Server(server);
+const io = new Server(server);
 
-const PORT       = process.env.PORT || 3010;
-const MONGO_URI  = process.env.MONGO_URI || 'mongodb://localhost:27017/notnotjosh';
 const ADMIN_USER = process.env.ADMIN_USER;
 const ADMIN_PASS = process.env.ADMIN_PASS;
 
-if (!ADMIN_USER || !ADMIN_PASS) {
-  console.error('❌ Missing ADMIN_USER or ADMIN_PASS in .env');
-  process.exit(1);
-}
-
-// ————————————————————————————————————————
-// All-time likes persistence
-// ————————————————————————————————————————
-const BEST_FILE = path.join(__dirname, 'best-likes.json');
-let bestLikes = {};
-try {
-  bestLikes = JSON.parse(fs.readFileSync(BEST_FILE, 'utf8'));
-  console.log('✔ Loaded best-likes.json');
-} catch {
-  console.log('⚠ Starting with empty best-likes');
-  bestLikes = {};
-}
-
-function saveBestLikes() {
-  fs.writeFileSync(BEST_FILE, JSON.stringify(bestLikes, null, 2));
-}
-
-function getAllTimeLeaderboard() {
-  return Object.entries(bestLikes)
-    .map(([username, likes]) => ({ username, likes }))
-    .sort((a, b) => b.likes - a.likes)
-    .slice(0, 30);
-}
-
-// ————————————————————————————————————————
-// MongoDB connection
-// ————————————————————————————————————————
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('✔ MongoDB connected'))
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
-
-// ————————————————————————————————————————
-// Middleware
-// ————————————————————————————————————————
-app.use(bodyParser.json());
-
-// ————————————————————————————————————————
-// Basic Auth for /admin
-// ————————————————————————————————————————
-app.use(
-  '/admin',
-  basicAuth({
-    users: { [ADMIN_USER]: ADMIN_PASS },
-    challenge: true,
-    realm: 'NotNotJosh Admin Area',
-  }),
-  express.static(path.join(__dirname, 'public', 'admin'))
-);
-
-// ————————————————————————————————————————
-// Serve public files
-// ————————————————————————————————————————
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }
+}));
 
-// ————————————————————————————————————————
-// Tournament REST API
-// ————————————————————————————————————————
+// --- Admin Middleware ---
+function isAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+}
 
-// List all tournaments
+// --- Admin Auth APIs ---
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    req.session.isAdmin = true;
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ error: 'Invalid credentials' });
+});
+app.post('/api/admin/logout', (req, res) => {
+  req.session.destroy(() => res.json({ ok: true }));
+});
+app.get('/api/admin/check', (req, res) => {
+  if (req.session && req.session.isAdmin) return res.json({ ok: true });
+  res.status(401).json({ error: 'Unauthorized' });
+});
+
+// --- Public Leaderboard API ---
+app.get('/api/best-likes', (req, res) => {
+  const jsonPath = path.join(__dirname, 'best-likes.json');
+  if (fs.existsSync(jsonPath)) {
+    res.sendFile(jsonPath);
+  } else {
+    res.json([]);
+  }
+});
+
+// --- Tournament APIs ---
+// Public: view tournaments and players
 app.get('/api/tournaments', async (req, res) => {
-  const tours = await Tournament.find().sort({ createdAt: -1 });
-  res.json(tours);
+  const tournaments = await Tournament.find();
+  res.json(tournaments);
 });
-
-// Get one tournament
 app.get('/api/tournaments/:id', async (req, res) => {
-  try {
-    const t = await Tournament.findById(req.params.id);
-    if (!t) return res.status(404).json({ error: 'Not found' });
-    res.json(t);
-  } catch {
-    res.status(400).json({ error: 'Invalid ID' });
-  }
-});
-
-// Create a new tournament (default bracket = [])
-app.post('/api/tournaments', async (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).send('Missing name');
-  const t = await Tournament.create({ name, bracket: [], status: 'registration' });
-  io.emit('tournaments-update');
-  res.status(201).json(t);
-});
-
-// Join a tournament
-app.post('/api/tournaments/:id/join', async (req, res) => {
-  const { username } = req.body;
-  if (!username) return res.status(400).send('Missing username');
   const t = await Tournament.findById(req.params.id);
-  if (!t) return res.status(404).send('Not found');
-  if (t.status !== 'registration') return res.status(400).send('Registration closed');
-  if (!t.entrants.includes(username)) {
-    t.entrants.push(username);
-    await t.save();
-    io.emit('tournament-update', t);
-    io.emit('tournaments-update');
-  }
   res.json(t);
 });
 
-// Start tournament (build bracket)
-app.post('/api/tournaments/:id/start', async (req, res) => {
-  const t = await Tournament.findById(req.params.id);
-  if (!t) return res.status(404).send('Not found');
-  if (t.status !== 'registration') return res.status(400).send('Already started');
-  let entrants = [...t.entrants];
-  if (!entrants.length) return res.status(400).send('No entrants');
-  if (entrants.length % 2) entrants.push('');
-  entrants.sort(() => Math.random() - 0.5);
+// Admin: manage tournaments
+app.post('/api/tournaments', isAdmin, async (req, res) => {
+  try {
+    const tournament = new Tournament({ name: req.body.name });
+    await tournament.save();
+    res.json(tournament);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+app.put('/api/tournaments/:id', isAdmin, async (req, res) => {
+  try {
+    const t = await Tournament.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    res.json(t);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+app.delete('/api/tournaments/:id', isAdmin, async (req, res) => {
+  await Tournament.findByIdAndDelete(req.params.id);
+  res.sendStatus(204);
+});
+app.delete('/api/tournaments/:id/players/:playerId', isAdmin, async (req, res) => {
+  const tournament = await Tournament.findById(req.params.id);
+  tournament.players = tournament.players.filter(
+    p => p._id.toString() !== req.params.playerId
+  );
+  await tournament.save();
+  res.json(tournament);
+});
+app.put('/api/tournaments/:id/players/:playerId', isAdmin, async (req, res) => {
+  const tournament = await Tournament.findById(req.params.id);
+  const idx = tournament.players.findIndex(p => p._id.toString() === req.params.playerId);
+  if (idx === -1) return res.status(404).json({ error: 'Player not found' });
+  Object.assign(tournament.players[idx], req.body);
+  await tournament.save();
+  res.json(tournament.players[idx]);
+});
+app.post('/api/tournaments/:id/bracket/generate', isAdmin, async (req, res) => {
+  const tournament = await Tournament.findById(req.params.id);
+  tournament.rounds = generateSingleElimBracket(tournament.players);
+  await tournament.save();
+  res.json(tournament.rounds);
+});
+app.post('/api/tournaments/:id/match/:round/:match/set-winner', isAdmin, async (req, res) => {
+  const { id, round, match } = req.params;
+  const { winnerId } = req.body;
+  const tournament = await Tournament.findById(id);
+  tournament.rounds[round][match].winner = winnerId;
+  const roundIdx = parseInt(round, 10);
+  const matchIdx = parseInt(match, 10);
+  if (tournament.rounds[roundIdx + 1]) {
+    const nextMatchIdx = Math.floor(matchIdx / 2);
+    const pos = matchIdx % 2 === 0 ? 'player1' : 'player2';
+    tournament.rounds[roundIdx + 1][nextMatchIdx][pos] = winnerId;
+  }
+  await tournament.save();
+  res.json(tournament.rounds);
+});
 
-  const bracket = [];
-  for (let i = 0; i < entrants.length; i += 2) {
-    bracket.push({
-      matchId: i / 2,
-      player1: entrants[i],
-      player2: entrants[i + 1],
-      winner: '',
-      round: 1
+// Player registration (public, no admin needed)
+app.post('/api/tournaments/:id/players', async (req, res) => {
+  const tournament = await Tournament.findById(req.params.id);
+  tournament.players.push(req.body);
+  await tournament.save();
+  res.json(tournament);
+});
+
+// --- Helper for bracket ---
+function generateSingleElimBracket(players) {
+  const pLen = players.length;
+  let rounds = [];
+  let numMatches = Math.ceil(pLen / 2);
+  let matches = [];
+  for (let i = 0; i < numMatches; i++) {
+    matches.push({
+      player1: players[i * 2]?._id || null,
+      player2: players[i * 2 + 1]?._id || null,
+      winner: null,
+      matchNumber: i
     });
   }
-  t.bracket = bracket;
-  t.status  = 'in-progress';
-  await t.save();
-  io.emit('tournament-update', t);
-  io.emit('tournaments-update');
-  res.json(t);
-});
-
-// Record match winner & advance
-app.post('/api/tournaments/:id/match/:matchId', async (req, res) => {
-  const { winner } = req.body;
-  if (!winner) return res.status(400).send('Missing winner');
-
-  const t = await Tournament.findById(req.params.id);
-  if (!t) return res.status(404).send('Not found');
-  if (t.status !== 'in-progress') return res.status(400).send('Not in progress');
-
-  if (!Array.isArray(t.bracket) || t.bracket.length === 0) {
-    return res.status(400).send('Bracket not initialized');
-  }
-
-  const mId = Number(req.params.matchId);
-  const match = t.bracket.find(m => m.matchId === mId && !m.winner);
-  if (!match) return res.status(400).send('Invalid or already completed match');
-
-  match.winner = winner;
-
-  // Advance to next round
-  const nextRound = match.round + 1;
-  const offset    = t.entrants.length / Math.pow(2, nextRound);
-  const nextId    = Math.floor(mId / 2) + offset;
-
-  let nextMatch = t.bracket.find(m => m.round === nextRound && m.matchId === nextId);
-  if (!nextMatch) {
-    nextMatch = { matchId: nextId, player1: '', player2: '', winner: '', round: nextRound };
-    t.bracket.push(nextMatch);
-  }
-  if (mId % 2 === 0) nextMatch.player1 = winner;
-  else               nextMatch.player2 = winner;
-
-  const maxRounds = Math.log2(t.entrants.length);
-  if (nextRound > maxRounds) t.status = 'finished';
-
-  await t.save();
-  io.emit('tournament-update', t);
-  io.emit('tournaments-update');
-  res.json(t);
-});
-
-// ————————————————————————————————————————
-// TikTok Live-Stats & Queue (no changes here)
-// ————————————————————————————————————————
-const tiktokUsername = 'notnotjosh_';
-let users = {}, live = false, queue = [];
-let connection = null;
-
-async function connectToTikTok() {
-  connection = new WebcastPushConnection(tiktokUsername);
-  try {
-    await connection.connect();
-    live = true; io.emit('live-status', true);
-    console.log(`🟢 Connected to TikTok LIVE as @${tiktokUsername}`);
-    setupTikTokListeners();
-  } catch {
-    live = false; io.emit('live-status', false);
-    console.log('⚠ Not live—retrying in 60s');
-    setTimeout(connectToTikTok, 60000);
-  }
-}
-
-function setupTikTokListeners() {
-  connection.on('like', data => {
-    const username = data.uniqueId?.trim() || `user_${data.userId||'unknown'}`;
-    const count    = typeof data.likeCount === 'number' && data.likeCount > 0
-                     ? data.likeCount : 1;
-    users[username] = (users[username]||0) + count;
-
-    if (users[username] > (bestLikes[username]||0)) {
-      bestLikes[username] = users[username];
-      saveBestLikes();
-      io.emit('all-time-leaderboard', getAllTimeLeaderboard());
+  rounds.push(matches);
+  let currNumMatches = numMatches;
+  while (currNumMatches > 1) {
+    currNumMatches = Math.ceil(currNumMatches / 2);
+    let nextRound = [];
+    for (let i = 0; i < currNumMatches; i++) {
+      nextRound.push({
+        player1: null,
+        player2: null,
+        winner: null,
+        matchNumber: i
+      });
     }
-    io.emit('live-stats', getSessionLeaderboard());
-  });
-
-  connection.on('streamStart', () => {
-    live = true; io.emit('live-status', true);
-  });
-  connection.on('streamEnd', () => {
-    live = false; io.emit('live-status', false);
-    users = {};
-    setTimeout(connectToTikTok, 60000);
-  });
+    rounds.push(nextRound);
+  }
+  return rounds;
 }
 
-function getSessionLeaderboard() {
-  return Object.entries(users)
-    .map(([username, likes]) => ({ username, likes }))
-    .sort((a, b) => b.likes - a.likes);
-}
-
-connectToTikTok();
-setInterval(() => {
-  io.emit('live-status', live);
-  io.emit('live-stats', getSessionLeaderboard());
-}, 2000);
-
-// ————————————————————————————————————————
-// Socket.IO real-time handlers
-// ————————————————————————————————————————
-io.on('connection', socket => {
-  socket.emit('all-time-leaderboard', getAllTimeLeaderboard());
-  socket.on('request-all-time-leaderboard', () => {
-    socket.emit('all-time-leaderboard', getAllTimeLeaderboard());
-  });
-
-  socket.emit('live-status', live);
-  socket.emit('live-stats', getSessionLeaderboard());
-  socket.emit('queue-update', queue);
-  socket.on('subscribe-live', () => {
-    socket.emit('live-status', live);
-    socket.emit('live-stats', getSessionLeaderboard());
-    socket.emit('queue-update', queue);
-  });
-
-  socket.on('join-queue', username => {
-    if (!queue.some(u => u.username === username)) {
-      queue.push({ username, played: false, joinedAt: Date.now() });
-      io.emit('queue-update', queue);
-    }
-  });
-  socket.on('admin-mark-played', username => {
-    queue = queue.map(u => u.username === username ? { ...u, played: true } : u);
-    io.emit('queue-update', queue);
-  });
-  socket.on('admin-remove', username => {
-    queue = queue.filter(u => u.username !== username);
-    io.emit('queue-update', queue);
-  });
-
-  socket.on('get-tournaments', async () => {
-    const tours = await Tournament.find().sort({ createdAt: -1 });
-    socket.emit('tournaments-list', tours);
-  });
-  socket.on('subscribe-tournament', async id => {
-    const t = await Tournament.findById(id);
-    socket.emit('tournament-detail', t);
-  });
+// --- Socket.IO (future use) ---
+io.on('connection', (socket) => {
+  console.log('A user connected');
 });
 
-// ————————————————————————————————————————
-// Start HTTP server
-// ————————————————————————————————————————
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
-});
+// --- DB & SERVER ---
+const PORT = process.env.PORT || 3000;
+mongoose.connect('mongodb://localhost:27017/nnj')
+  .then(() => {
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  }).catch(err => {
+    console.error('MongoDB connection error:', err);
+  });

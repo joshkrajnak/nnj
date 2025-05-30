@@ -4,8 +4,9 @@
 window.addEventListener('unhandledrejection', event => {
   const err = event.reason;
   if (err && err.data?.method === 'PUBLIC_GetOneTapSettings') {
-    console.debug('Ignored TikTok one‑tap error:', err.message);
+    //console.debug('Ignored TikTok one‑tap error:', err.message);
     event.preventDefault();
+    return false;
   }
 });
 

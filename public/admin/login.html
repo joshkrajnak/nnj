@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login | NotNotJosh</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>Admin Login</h1>
+    <form id="login-form">
+      <input type="text" name="username" placeholder="Username" required><br>
+      <input type="password" name="password" placeholder="Password" required><br>
+      <button>Login</button>
+      <div id="login-error" style="color:red;display:none;"></div>
+    </form>
+  </main>
+  <script>
+    document.getElementById('login-form').onsubmit = async function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: fd.get('username'), password: fd.get('password') })
+      });
+      if (res.ok) {
+        location.href = '/admin/tournaments.html';
+      } else {
+        document.getElementById('login-error').textContent = 'Login failed!';
+        document.getElementById('login-error').style.display = 'block';
+      }
+    };
+  </script>
+</body>
+</html>
