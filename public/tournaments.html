@@ -13,34 +13,73 @@
 <body>
   <header>
     <nav class="main-nav">
-      <button class="nav-toggle" aria-label="Toggle menu">
-        <span></span>
-      </button>
+      <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
       <ul class="nav-links">
         <li><a href="/" class="nav-link">Live Stats</a></li>
         <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
         <li><a href="/tournaments.html" class="nav-link active">Tournaments</a></li>
       </ul>
-      <a href="https://tiktok.com/notnotjosh_" target="_blank"
-         class="notnotjosh-btn">NotNotJosh</a>
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
     </nav>
   </header>
   <main>
-    <h1 class="hero-title" style="margin-top:60px;">Join a Tournament</h1>
-    <ul id="tournament-list"></ul>
-    
-    <!-- Join Form Modal -->
-    <div id="join-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-      <form id="join-form" style="background:#222;padding:2rem;border-radius:8px;max-width:350px;margin:auto;display:flex;flex-direction:column;gap:1rem;">
-        <h2>Join Tournament</h2>
-        <input name="tiktokUsername" placeholder="TikTok Username" required>
-        <input name="fortniteName" placeholder="Fortnite Name/ID" required>
-        <button type="submit">Join</button>
-        <button type="button" id="close-join-modal">Cancel</button>
+    <h1 class="tourney-main-header">Tournaments</h1>
+    <div class="tourney-rules-box">
+      <button class="tourney-rules-toggle" onclick="toggleRules()">Tournament Rules &#9660;</button>
+      <div class="tourney-rules-content" id="tourney-rules-content" style="display:none;">
+        <ul>
+          <li>You must be at least 13 years old to enter.</li>
+          <li>One entry per player, per tournament.</li>
+          <li>No cheating, exploiting, or unsportsmanlike behavior.</li>
+          <li>Prizes may be substituted, delayed, or withheld at our discretion.</li>
+          <li>We reserve the right to remove any participant or cancel the event at any time.</li>
+          <li>Full terms: <a href="/tos.html" target="_blank">Terms of Service</a></li>
+        </ul>
+      </div>
+      
+    </div>
+    <script>
+      function toggleRules() {
+        const content = document.getElementById('tourney-rules-content');
+        content.style.display = (content.style.display === "none") ? "block" : "none";
+      }
+    </script>
+    <div id="user-bar" style="text-align:right; margin-bottom:1rem;"></div>
+    <div id="tourney-list" class="tourney-list"></div>
+  </main>
+
+  <!-- Join Modal -->
+  <div id="join-modal" class="join-modal" style="display:none;">
+    <div class="join-modal-content">
+      <span id="close-modal" class="join-modal-close" aria-label="Close">&times;</span>
+      <h2 class="modal-title">Join Tournament</h2>
+      <div class="modal-note">
+        <b>Note:</b> You must be at least <b>13 years old</b> to join any tournament.<br>
+        By joining, you agree to our
+        <a href="/tos.html" target="_blank" class="modal-link">Terms of Service</a> and
+        <a href="/privacy.html" target="_blank" class="modal-link">Privacy Policy</a>.
+      </div>
+      <form id="join-form" autocomplete="off">
+        <label class="modal-label">
+          TikTok Username:
+          <input type="text" name="tiktok" id="tiktok-username" readonly class="modal-input" autocomplete="off">
+        </label>
+        <label class="modal-label">
+          Fortnite Name:
+          <input type="text" name="fortnite" required maxlength="32" class="modal-input" autocomplete="off">
+        </label>
+        <button type="submit" class="tourney-join-btn modal-join-btn">Join</button>
       </form>
     </div>
-  </main>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/tournaments.js"></script>
+  </div>
+
+  <div id="footer-include"></div>
+  <script>
+    fetch('/footer.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('footer-include').innerHTML = html);
+  </script>
+  <script src="tournaments.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

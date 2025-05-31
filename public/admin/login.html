@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <main>
+  <main class="login-main">
     <h1>Admin Login</h1>
     <form id="login-form">
       <input type="text" name="username" placeholder="Username" required><br>
@@ -25,7 +25,7 @@
         body: JSON.stringify({ username: fd.get('username'), password: fd.get('password') })
       });
       if (res.ok) {
-        location.href = '/admin/tournaments.html';
+        location.href = '/admin';
       } else {
         document.getElementById('login-error').textContent = 'Login failed!';
         document.getElementById('login-error').style.display = 'block';

@@ -1,10 +1,8 @@
-// public/main.js
+// public/live.js
 
-// === Suppress TikTok One‑Tap RPC failures ===
 window.addEventListener('unhandledrejection', event => {
   const err = event.reason;
   if (err && err.data?.method === 'PUBLIC_GetOneTapSettings') {
-    //console.debug('Ignored TikTok one‑tap error:', err.message);
     event.preventDefault();
     return false;
   }
@@ -13,19 +11,18 @@ window.addEventListener('unhandledrejection', event => {
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  // Helper: safe setter
-  function safeRender(id, rowsHtml) {
+  function safeRender(id, html) {
     const el = document.getElementById(id);
-    if (!el) {
-      console.warn(`Element #${id} not found; skipping render.`);
-      return;
-    }
-    el.innerHTML = rowsHtml;
+    if (el) el.innerHTML = html;
   }
 
-  // Render session leaderboard
-  function renderSession(list) {
-    const rows = list.map((u, i) => `
+  // Renders the leaderboard using current session data
+  function renderSession(leaderboard) {
+    const users = Object.entries(leaderboard)
+      .map(([username, likes]) => ({ username, likes }))
+      .sort((a, b) => b.likes - a.likes);
+
+    const rows = users.map((u, i) => `
       <tr>
         <td>${i + 1}</td>
         <td>${u.username}</td>
@@ -35,11 +32,27 @@ document.addEventListener('DOMContentLoaded', () => {
     safeRender('session-body', rows);
   }
 
-  // Listen for live stats updates
-  socket.on('live-stats', list => {
-    renderSession(list);
+  // Listen for live status and like count
+  socket.on('liveStatus', ({ isLive, totalLikes }) => {
+    const statusEl = document.getElementById('live-status');
+    statusEl.innerHTML = `<span class="live-dot" style="background:${isLive ? 'red' : 'gray'}"></span> ${isLive ? 'LIVE' : 'Offline'}`;
+    const likeEl = document.getElementById('likeCount');
+    if (likeEl) likeEl.innerText = (totalLikes || 0).toLocaleString();
   });
 
-  // Ensure we subscribe on connect
+  // Listen for session leaderboard updates
+  socket.on('sessionLeaderboard', leaderboard => {
+    renderSession(leaderboard);
+  });
+
+  // Also handle per-like updates (optional, for snappy updates)
+  socket.on('likeUpdate', (data) => {
+    const likeEl = document.getElementById('likeCount');
+    if (likeEl && typeof data.totalLikes === 'number')
+      likeEl.innerText = data.totalLikes.toLocaleString();
+  });
+
+  // Initial subscription to live session updates
   socket.emit('subscribe-live');
+  window._liveSocket = socket;
 });

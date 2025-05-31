@@ -20,39 +20,32 @@
 <body>
   <header>
     <nav class="main-nav">
-      <!-- Mobile toggle -->
       <button class="nav-toggle" aria-label="Toggle menu">
         <span></span>
       </button>
-
-      <!-- Main links -->
       <ul class="nav-links">
-        <li><a href="/" class="nav-link active">Live Stats</a></li>
+        <li><a href="/" class="nav-link active">Live Stats</a></li>
         <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
         <li><a href="/tournaments.html" class="nav-link">Tournaments</a></li>
       </ul>
-
-      <!-- TikTok button on the right -->
-      <a href="https://tiktok.com/notnotjosh_" target="_blank" class="notnotjosh-btn">
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">
         NotNotJosh
       </a>
     </nav>
   </header>
 
   <main>
-    <!-- (You can remove this empty H1 if not needed) -->
-    <h1 class="hero-title" style="margin-top:100px;"></h1>
-
+    <h1 class="hero-title" style="margin-top:100px;">Live Stats</h1>
     <section class="hero">
-      <div id="live-status" class="live-status">
-        <span class="live-dot"></span> Offline
+      <div id="live-status" class="live-status" style="font-size:1.25em;margin-bottom:8px;">
+        <span class="live-dot" style="background:gray"></span> Offline
       </div>
-      <div class="tiktok-handle">
+      <div class="tiktok-handle" style="margin-bottom:16px;">
         TikTok: <a href="https://tiktok.com/@notnotjosh_" target="_blank">@notnotjosh_</a>
       </div>
-
-      <h1 class="hero-title">Live Stats</h1>
-
+      <div class="live-total-likes" style="font-size:1.2em; margin-bottom:16px;">
+        Total Likes: <span id="likeCount">0</span>
+      </div>
       <!-- SESSION LEADERBOARD -->
       <div class="live-leaderboard">
         <table>
@@ -64,17 +57,20 @@
             </tr>
           </thead>
           <tbody id="session-body">
-            <!-- Populated by main.js -->
+            <!-- Populated by live.js -->
           </tbody>
         </table>
       </div>
-    </section> <!-- <-- Added closing tag -->
-
+    </section>
   </main>
 
-  <!-- Socket.IO client -->
+  <div id="footer-include"></div>
+  <script>
+    fetch('/footer.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('footer-include').innerHTML = html);
+  </script>
   <script src="/socket.io/socket.io.js"></script>
-  <!-- Your main logic -->
-  <script src="/live.js"></script>
+  <script src="live.js"></script>
 </body>
 </html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terms of Service | NotNotJosh</title>
+  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Regular.woff2" rel="preload">
+  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Medium.woff2" rel="preload">
+  <link as="style" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
+  <link crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav class="main-nav">
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Live Stats</a></li>
+        <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
+        <li><a href="/tournaments.html" class="nav-link ">Tournaments</a></li>
+      </ul>
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
+    </nav>
+  </header>  
+   <body>
+  <main class="container" style="max-width:750px;margin:2.5rem auto;">
+     <h1>Terms of Service</h1>
+    <p>Welcome to NotNotJosh.com! By using this site or participating in any tournaments, you agree to the following:</p>
+
+    <h2>Eligibility & Age Requirements</h2>
+    <ul>
+      <li>You must be at least 13 years old to use this site or participate in tournaments. If you are under 13, you are not permitted to register or compete.</li>
+      <li>By joining a tournament, you confirm you are eligible under all applicable laws and platform rules (including TikTok and Fortnite’s terms).</li>
+      <li>We reserve the right to ban, disqualify, or remove users at any time, for any reason, with or without notice.</li>
+    </ul>
+
+    <h2>Tournament Rules & Prizes</h2>
+    <ul>
+      <li>Tournament formats, rules, and prizes may change at any time without notice.</li>
+      <li>Prize fulfillment (e.g., V-Bucks) is not guaranteed. Prizes may be substituted, delayed, or withheld at our sole discretion, for any reason (including suspected cheating, platform issues, or inability to deliver).</li>
+      <li>We reserve the right to cancel, modify, or end any tournament at any time, for any reason, without liability.</li>
+      <li>We are not responsible for the actions, statements, or conduct of any participants. Offensive, abusive, or inappropriate behavior will result in removal and may be reported.</li>
+    </ul>
+
+    <h2>Account Registration & Data</h2>
+    <ul>
+      <li>Some features require registration. You may be asked for your TikTok username and Fortnite ID. Do not provide false information.</li>
+      <li>By registering, you consent to collection and use of your data as outlined in our <a href="/privacy.html">Privacy Policy</a>.</li>
+      <li>Like counts, scores, and other user-generated data may be displayed publicly.</li>
+      <li>We do not guarantee the availability, security, or accuracy of any site content or tournament data.</li>
+    </ul>
+
+    <h2>Limitation of Liability</h2>
+    <ul>
+      <li>NOTNOTJOSH.COM IS PROVIDED “AS IS” WITHOUT ANY WARRANTIES.</li>
+      <li>We are not liable for any damages or losses arising from your use of this site, participation in tournaments, or reliance on any information herein.</li>
+      <li>You agree to indemnify and hold harmless NotNotJosh.com and its owner(s) from all claims, losses, or damages resulting from your participation or use of the site.</li>
+    </ul>
+
+    <h2>Changes to Terms</h2>
+    <ul>
+      <li>We may update these Terms of Service at any time, with or without notice. Continued use of the site constitutes acceptance of the latest terms.</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>Questions? Email <a href="mailto:joshuakrajnak@gmail.com">joshuakrajnak@gmail.com</a></p>
+  </main>
+  <div id="footer-include"></div>
+  <script>
+    fetch('/footer.html').then(res => res.text()).then(html => document.getElementById('footer-include').innerHTML = html);
+  </script>
+</body>
+</html>

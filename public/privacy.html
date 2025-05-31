@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Privacy | NotNotJosh</title>
+  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Regular.woff2" rel="preload">
+  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Medium.woff2" rel="preload">
+  <link as="style" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
+  <link crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav class="main-nav">
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span>
+      </button>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Live Stats</a></li>
+        <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
+        <li><a href="/tournaments.html" class="nav-link ">Tournaments</a></li>
+      </ul>
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
+    </nav>
+  </header>  
+   <body>
+  <main class="container" style="max-width:750px;margin:2.5rem auto;">
+    <h1>Privacy Policy</h1>
+    <p>Your privacy is important! Here’s how we handle your information:</p>
+
+    <h2>Information We Collect</h2>
+    <ul>
+      <li><strong>Account info:</strong> If you register, we may collect your TikTok username, Fortnite ID, and email (if provided).</li>
+      <li><strong>Engagement data:</strong> We track and display like counts, scores, and similar metrics for tournaments and live streams. This data may be public.</li>
+      <li><strong>Usage data:</strong> We use analytics to understand site usage (e.g., device/browser type, visits). No personal details are sold or shared.</li>
+    </ul>
+
+    <h2>How We Use Your Data</h2>
+    <ul>
+      <li>To operate tournaments and leaderboards.</li>
+      <li>To contact winners or resolve disputes.</li>
+      <li>To improve site performance and security.</li>
+      <li>We may display usernames, scores, and like counts publicly. We do NOT sell your personal information.</li>
+    </ul>
+
+    <h2>Children Under 13</h2>
+    <ul>
+      <li>This site is not intended for children under 13. If you believe a child under 13 has provided information, email us immediately to remove it.</li>
+    </ul>
+
+    <h2>Third-Party Services</h2>
+    <ul>
+      <li>We may link to or use TikTok, Fortnite, or analytics providers. Each has its own privacy policy. We are not responsible for their practices.</li>
+    </ul>
+
+    <h2>Security</h2>
+    <ul>
+      <li>We use standard security measures but cannot guarantee absolute security. Use the site at your own risk.</li>
+    </ul>
+
+    <h2>Changes</h2>
+    <ul>
+      <li>We may update this policy at any time. Continued use of the site means you accept the current policy.</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>Questions or requests? Email <a href="mailto:joshuakrajnak@gmail.com">joshuakrajnak@gmail.com</a></p>
+  </main>
+  <div id="footer-include"></div>
+  <script>
+    fetch('/footer.html').then(res => res.text()).then(html => document.getElementById('footer-include').innerHTML = html);
+  </script>
+</body>
+</html>

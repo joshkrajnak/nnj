@@ -29,8 +29,7 @@
       </ul>
 
       <!-- TikTok button -->
-      <a href="https://tiktok.com/notnotjosh_" target="_blank"
-         class="notnotjosh-btn">NotNotJosh</a>
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
     </nav>
   </header>
 
@@ -52,8 +51,14 @@
       </table>
     </div>
   </main>
-
+<div id="footer-include"></div>
+<script>
+  fetch('/footer.html')
+    .then(res => res.text())
+    .then(html => document.getElementById('footer-include').innerHTML = html);
+</script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/leaderboard.js"></script>
+  <script src="/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,22 @@
+<!-- /public/footer.html -->
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-left">
+      <span>&copy; <span id="footer-year"></span> NotNotJosh.com</span>
+    </div>
+    <div class="footer-center">
+      <a href="/tos.html" class="footer-link">Terms of Service</a>
+      <span class="footer-divider">|</span>
+      <a href="/privacy.html" class="footer-link">Privacy Policy</a>
+    </div>
+    <div class="footer-right">
+      <a href="https://tiktok.com/@notnotjosh_" target="_blank" rel="noopener" class="footer-social">
+        <img src="/tiktok.svg" alt="TikTok" class="footer-icon" />
+      </a>
+    </div>
+  </div>
+</footer>
+<script>
+  // Auto update the year
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+</script>

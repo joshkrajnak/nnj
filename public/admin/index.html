@@ -5,34 +5,42 @@
   <title>Tournament Admin</title>
   <link rel="stylesheet" href="../style.css">
 </head>
-
 <body>
-    <header>
+  <header>
     <nav class="main-nav">
       <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
       <ul class="nav-links">
-        <li><a href="/admin/live.html" class="nav-link">Live Stats</a></li>
-        <li><a href="/admin/leaderboard.html" class="nav-link">Leaderboard</a></li>
-        <li><a href="/admin/tournaments.html" class="nav-link active">Tournaments</a></li>
+        <li><a href="/index.html" class="nav-link">Live Stats</a></li>
+        <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
+        <li><a href="/tournaments.html" class="nav-link active">Tournaments</a></li>
       </ul>
-      <a href="https://tiktok.com/notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
+    
+      <button id="logoutBtn" class="notnotjosh-btn">Logout</button>
     </nav>
   </header>
-  
-  
+
   <div class="container">
     <h1 class="admin-title">Tournament Admin</h1>
-    <button id="logoutBtn" class="admin-btn">Logout</button>
+
+
+    <!-- Create Tournament -->
     <h2>Create Tournament</h2>
     <form id="new-tourney-form" class="admin-form">
       <input id="new-tourney-name" class="admin-input" placeholder="Tournament Name" required>
+      <input id="new-tourney-description" class="admin-input" placeholder="Description (optional)">
+      <input id="new-tourney-date" class="admin-input" type="date" placeholder="Date (optional)">
       <button type="submit" class="admin-btn">Create</button>
     </form>
+
     <h2>Tournaments</h2>
     <ul id="admin-tournament-list" class="admin-tourney-list"></ul>
     <div id="admin-detail" class="admin-detail"></div>
   </div>
+
+  <div id="admin-snackbar" class="admin-snackbar"></div>
+
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/admin/admin.js"></script>
+  <script type="module" src="admin.js"></script>
+
 </body>
 </html>

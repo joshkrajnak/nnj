@@ -8,6 +8,7 @@ const fs = require('fs');
 const http = require('http');
 const session = require('express-session');
 const { Server } = require('socket.io');
+const fetch = require('node-fetch');
 const Tournament = require('./models/Tournament');
 
 const app = express();
@@ -17,6 +18,12 @@ const io = new Server(server);
 const ADMIN_USER = process.env.ADMIN_USER;
 const ADMIN_PASS = process.env.ADMIN_PASS;
 
+// GLOBAL LIVE STATE
+let isLive = false;
+let totalLikes = 0;
+let leaderboard = {}; // { username: likeCount }
+
+// --- SESSION SETUP ---
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
@@ -26,13 +33,13 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// --- Admin Middleware ---
+// --- ADMIN MIDDLEWARE ---
 function isAdmin(req, res, next) {
   if (req.session && req.session.isAdmin) return next();
   res.status(401).json({ error: 'Unauthorized' });
 }
 
-// --- Admin Auth APIs ---
+// --- ADMIN AUTH APIS ---
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
@@ -49,7 +56,7 @@ app.get('/api/admin/check', (req, res) => {
   res.status(401).json({ error: 'Unauthorized' });
 });
 
-// --- Public Leaderboard API ---
+// --- PUBLIC LEADERBOARD API ---
 app.get('/api/best-likes', (req, res) => {
   const jsonPath = path.join(__dirname, 'best-likes.json');
   if (fs.existsSync(jsonPath)) {
@@ -174,9 +181,74 @@ function generateSingleElimBracket(players) {
   return rounds;
 }
 
-// --- Socket.IO (future use) ---
+
+// --- TikTok Live Status Checker ---
+const TIKTOK_USERNAME = process.env.TIKTOK_USERNAME || 'notnotjosh_';
+
+async function checkIfTikTokLive(username) {
+  try {
+    const resp = await fetch(`https://www.tiktok.com/@${username}/live`);
+    const text = await resp.text();
+    // This works if TikTok shows "LIVE NOW" or similar in the page when live.
+    return text.includes('LIVE NOW') || text.includes('LIVE'); // crude but effective for now
+  } catch (e) {
+    console.error('Live check error:', e);
+    return false;
+  }
+}
+
+// --- Poll TikTok live status every 60 seconds ---
+setInterval(async () => {
+  const wasLive = isLive;
+  isLive = await checkIfTikTokLive(TIKTOK_USERNAME);
+
+  if (isLive !== wasLive) {
+    console.log(`Stream status changed: ${isLive ? 'LIVE' : 'OFFLINE'}`);
+    io.emit('liveStatus', { isLive, totalLikes });
+    // Optionally: Reset stats on live start/end if you want
+    if (!isLive) totalLikes = 0;
+  }
+}, 60 * 1000);
+
+const { WebcastPushConnection } = require('tiktok-live-connector');
+const tiktokLive = new WebcastPushConnection(TIKTOK_USERNAME);
+
+tiktokLive.connect().then(state => {
+    console.log('Connected to TikTok LIVE');
+}).catch(err => {
+    console.error('Failed to connect to TikTok LIVE:', err);
+});
+
+// --- TikTok LIVE event handlers ---
+tiktokLive.on('like', (msg) => {
+  const user = msg.uniqueId || 'Anonymous';
+  const nickname = msg.nickname || user;    // (optional, for display)
+
+  totalLikes += 1;
+  leaderboard[user] = (leaderboard[user] || 0) + 1;
+  io.emit('likeUpdate', { totalLikes, username: user, nickname, likes: leaderboard[user] });
+  io.emit('sessionLeaderboard', leaderboard);
+});
+
+// --- Socket.IO (real-time) ---
 io.on('connection', (socket) => {
   console.log('A user connected');
+  socket.emit('liveStatus', { isLive, totalLikes });
+  socket.emit('sessionLeaderboard', leaderboard); // <--- add for initial page load
+
+  socket.on('sendLike', (data) => {
+    console.log('Like from:', data.username);
+    totalLikes += 1;
+    leaderboard[data.username] = (leaderboard[data.username] || 0) + 1;
+    io.emit('likeUpdate', { totalLikes, username: data.username, likes: leaderboard[data.username] });
+    io.emit('sessionLeaderboard', leaderboard);
+  });
+
+// In socket.io 'subscribe-live' handler:
+ socket.on('subscribe-live', () => {
+    socket.emit('liveStatus', { isLive, totalLikes });
+    socket.emit('sessionLeaderboard', leaderboard); // <--- ensures instant data on reconnect
+  });
 });
 
 // --- DB & SERVER ---
