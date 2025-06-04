@@ -10,6 +10,7 @@ const session = require('express-session');
 const { Server } = require('socket.io');
 const fetch = require('node-fetch');
 const Tournament = require('./models/Tournament');
+const { generateSingleElimBracket } = require('./lib/bracket');
 
 const app = express();
 const server = http.createServer(app);
@@ -53,6 +54,14 @@ app.post('/api/admin/logout', (req, res) => {
 });
 app.get('/api/admin/check', (req, res) => {
   if (req.session && req.session.isAdmin) return res.json({ ok: true });
+  res.status(401).json({ error: 'Unauthorized' });
+});
+
+// --- Current user info ---
+app.get('/api/me', (req, res) => {
+  if (req.session && req.session.user) {
+    return res.json(req.session.user);
+  }
   res.status(401).json({ error: 'Unauthorized' });
 });
 
@@ -149,37 +158,7 @@ app.post('/api/tournaments/:id/players', async (req, res) => {
   res.json(tournament);
 });
 
-// --- Helper for bracket ---
-function generateSingleElimBracket(players) {
-  const pLen = players.length;
-  let rounds = [];
-  let numMatches = Math.ceil(pLen / 2);
-  let matches = [];
-  for (let i = 0; i < numMatches; i++) {
-    matches.push({
-      player1: players[i * 2]?._id || null,
-      player2: players[i * 2 + 1]?._id || null,
-      winner: null,
-      matchNumber: i
-    });
-  }
-  rounds.push(matches);
-  let currNumMatches = numMatches;
-  while (currNumMatches > 1) {
-    currNumMatches = Math.ceil(currNumMatches / 2);
-    let nextRound = [];
-    for (let i = 0; i < currNumMatches; i++) {
-      nextRound.push({
-        player1: null,
-        player2: null,
-        winner: null,
-        matchNumber: i
-      });
-    }
-    rounds.push(nextRound);
-  }
-  return rounds;
-}
+
 
 
 // --- TikTok Live Status Checker ---
@@ -234,7 +213,7 @@ tiktokLive.on('like', (msg) => {
 io.on('connection', (socket) => {
   console.log('A user connected');
   socket.emit('liveStatus', { isLive, totalLikes });
-  socket.emit('sessionLeaderboard', leaderboard); // <--- add for initial page load
+  socket.emit('sessionLeaderboard', leaderboard); // <--- added for initial page load
 
   socket.on('sendLike', (data) => {
     console.log('Like from:', data.username);
