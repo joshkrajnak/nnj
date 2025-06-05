@@ -12,3 +12,10 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 });
+function toggleRules() {
+  const content = document.getElementById('tourney-rules-content');
+  const arrow = document.getElementById('rules-arrow'); // ✅ fixed this line
+  const isVisible = content.style.display === "block";
+  content.style.display = isVisible ? "none" : "block";
+  arrow.classList.toggle('expanded', !isVisible); // ✅ use CSS class toggle
+}

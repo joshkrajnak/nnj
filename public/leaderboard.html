@@ -11,54 +11,59 @@
   <link as="style" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
   <link crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <div id="particles-js"></div>
+
   <header>
     <nav class="main-nav">
-      <!-- Mobile toggle -->
       <button class="nav-toggle" aria-label="Toggle menu">
         <span></span>
       </button>
-
-      <!-- Main links -->
       <ul class="nav-links">
         <li><a href="/" class="nav-link">Live Stats</a></li>
         <li><a href="/leaderboard.html" class="nav-link active">Leaderboard</a></li>
         <li><a href="/tournaments.html" class="nav-link">Tournaments</a></li>
       </ul>
-
-      <!-- TikTok button -->
       <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
     </nav>
   </header>
 
   <main>
-    <h1 class="hero-title" style="margin-top:100px;">All‑Time Top 30</h1>
-
+ 
+     <h1 class="tourney-main-header">All‑Time Top 30 Fans</h1>
     <div class="live-leaderboard">
       <table>
         <thead>
           <tr>
             <th>Rank</th>
             <th>User</th>
-            <th>Best Likes</th>
+            <th>Total Likes</th>
           </tr>
         </thead>
         <tbody id="leaderboard-body">
-          <!-- Filled by leaderboard.js -->
+          <!-- Populated by leaderboard.js -->
         </tbody>
       </table>
     </div>
   </main>
-<div id="footer-include"></div>
-<script>
-  fetch('/footer.html')
-    .then(res => res.text())
-    .then(html => document.getElementById('footer-include').innerHTML = html);
-</script>
+
+  <div id="footer-include"></div>
+  <script>
+    fetch('/footer.html')
+      .then(res => res.text())
+      .then(html => document.getElementById('footer-include').innerHTML = html);
+  </script>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="/leaderboard.js"></script>
   <script src="/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    particlesJS.load('particles-js', '/particles.json', function() {
+
+    });
+  </script>
 </body>
 </html>

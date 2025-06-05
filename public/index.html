@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+  <div id="particles-js"></div>
   <header>
     <nav class="main-nav">
       <button class="nav-toggle" aria-label="Toggle menu">
@@ -35,7 +36,8 @@
   </header>
 
   <main>
-    <h1 class="hero-title" style="margin-top:100px;">Live Stats</h1>
+
+    <h1 class="tourney-main-header">Live Stats</h1>
     <section class="hero">
       <div id="live-status" class="live-status" style="font-size:1.25em;margin-bottom:8px;">
         <span class="live-dot" style="background:gray"></span> Offline
@@ -72,5 +74,13 @@
   </script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="live.js"></script>
+  <script src="main.js"></script>  
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    particlesJS.load('particles-js', '/particles.json', function() {
+
+    });
+  </script>
+
 </body>
 </html>

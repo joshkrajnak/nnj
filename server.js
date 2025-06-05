@@ -1,5 +1,3 @@
-// server.js
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -8,8 +6,8 @@ const fs = require('fs');
 const http = require('http');
 const session = require('express-session');
 const { Server } = require('socket.io');
-const fetch = require('node-fetch');
 const Tournament = require('./models/Tournament');
+const { WebcastPushConnection } = require('tiktok-live-connector');
 
 const app = express();
 const server = http.createServer(app);
@@ -17,29 +15,67 @@ const io = new Server(server);
 
 const ADMIN_USER = process.env.ADMIN_USER;
 const ADMIN_PASS = process.env.ADMIN_PASS;
+const TIKTOK_USERNAME = process.env.TIKTOK_USERNAME || 'notnotjosh_';
 
-// GLOBAL LIVE STATE
 let isLive = false;
 let totalLikes = 0;
-let leaderboard = {}; // { username: likeCount }
+let sessionLeaderboard = {};
+let allTimeLeaderboard = {};
+const bestLikesPath = path.join(__dirname, 'best-likes.json');
 
-// --- SESSION SETUP ---
+if (fs.existsSync(bestLikesPath)) {
+  allTimeLeaderboard = JSON.parse(fs.readFileSync(bestLikesPath, 'utf-8'));
+}
+function saveLeaderboardToFile() {
+  fs.writeFileSync(bestLikesPath, JSON.stringify(allTimeLeaderboard, null, 2), 'utf-8');
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'secret',
+  secret: 'super-secret-key', // Replace in production
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false }
+  cookie: {
+    secure: false, // true in production if using HTTPS
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
+  }
 }));
 
-// --- ADMIN MIDDLEWARE ---
 function isAdmin(req, res, next) {
-  if (req.session && req.session.isAdmin) return next();
+  if (req.session?.isAdmin) return next();
   res.status(401).json({ error: 'Unauthorized' });
 }
 
-// --- ADMIN AUTH APIS ---
+app.post('/api/admin/reset-live', isAdmin, (req, res) => {
+  isLive = false;
+  totalLikes = 0;
+  sessionLeaderboard = {};
+  io.emit('live-reset');
+  res.sendStatus(200);
+});
+
+app.get('/api/live-status', (req, res) => {
+  res.json({ isLive });
+});
+
+app.post('/api/admin/set-live', (req, res) => {
+  const { isLive: newState } = req.body;
+  isLive = !!newState;
+
+  // ⬇️ Reset session stats if going offline
+  if (!isLive) {
+    totalLikes = 0;
+    sessionLeaderboard = {};
+    io.emit('sessionLeaderboard', sessionLeaderboard);
+  }
+
+  io.emit('liveStatus', { isLive, totalLikes });
+
+  res.json({ success: true, isLive });
+});
+
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
@@ -48,23 +84,13 @@ app.post('/api/admin/login', (req, res) => {
   }
   res.status(401).json({ error: 'Invalid credentials' });
 });
-app.post('/api/admin/logout', (req, res) => {
-  req.session.destroy(() => res.json({ ok: true }));
-});
+app.post('/api/admin/logout', (req, res) => req.session.destroy(() => res.json({ ok: true })));
 app.get('/api/admin/check', (req, res) => {
-  if (req.session && req.session.isAdmin) return res.json({ ok: true });
+  if (req.session?.isAdmin) return res.json({ ok: true });
   res.status(401).json({ error: 'Unauthorized' });
 });
+app.get('/api/best-likes', (req, res) => res.json(allTimeLeaderboard));
 
-// --- PUBLIC LEADERBOARD API ---
-app.get('/api/best-likes', (req, res) => {
-  const jsonPath = path.join(__dirname, 'best-likes.json');
-  if (fs.existsSync(jsonPath)) {
-    res.sendFile(jsonPath);
-  } else {
-    res.json([]);
-  }
-});
 
 // --- Tournament APIs ---
 // Public: view tournaments and players
@@ -80,7 +106,8 @@ app.get('/api/tournaments/:id', async (req, res) => {
 // Admin: manage tournaments
 app.post('/api/tournaments', isAdmin, async (req, res) => {
   try {
-    const tournament = new Tournament({ name: req.body.name });
+    const { name, description, date } = req.body;
+    const tournament = new Tournament({ name, description, date });
     await tournament.save();
     res.json(tournament);
   } catch (err) {
@@ -143,10 +170,35 @@ app.post('/api/tournaments/:id/match/:round/:match/set-winner', isAdmin, async (
 
 // Player registration (public, no admin needed)
 app.post('/api/tournaments/:id/players', async (req, res) => {
-  const tournament = await Tournament.findById(req.params.id);
-  tournament.players.push(req.body);
-  await tournament.save();
-  res.json(tournament);
+  try {
+    const { tiktokUsername, fortniteName } = req.body;
+
+    if (!tiktokUsername || !fortniteName) {
+      return res.status(400).json({ error: 'Missing player info' });
+    }
+
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    // Construct player object to match schema
+    const newPlayer = {
+      tiktokUsername,
+      fortniteName,
+      tosAgree: true,
+      tosTimestamp: new Date(),
+      tosVersion: '2024.06.01'
+    };
+
+    tournament.players.push(newPlayer);
+    await tournament.save();
+
+    res.json(tournament);
+  } catch (err) {
+    console.error('Add player error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // --- Helper for bracket ---
@@ -181,81 +233,97 @@ function generateSingleElimBracket(players) {
   return rounds;
 }
 
-
-// --- TikTok Live Status Checker ---
-const TIKTOK_USERNAME = process.env.TIKTOK_USERNAME || 'notnotjosh_';
-
-async function checkIfTikTokLive(username) {
-  try {
-    const resp = await fetch(`https://www.tiktok.com/@${username}/live`);
-    const text = await resp.text();
-    // This works if TikTok shows "LIVE NOW" or similar in the page when live.
-    return text.includes('LIVE NOW') || text.includes('LIVE'); // crude but effective for now
-  } catch (e) {
-    console.error('Live check error:', e);
-    return false;
-  }
-}
-
-// --- Poll TikTok live status every 60 seconds ---
-setInterval(async () => {
-  const wasLive = isLive;
-  isLive = await checkIfTikTokLive(TIKTOK_USERNAME);
-
-  if (isLive !== wasLive) {
-    console.log(`Stream status changed: ${isLive ? 'LIVE' : 'OFFLINE'}`);
-    io.emit('liveStatus', { isLive, totalLikes });
-    // Optionally: Reset stats on live start/end if you want
-    if (!isLive) totalLikes = 0;
-  }
-}, 60 * 1000);
-
-const { WebcastPushConnection } = require('tiktok-live-connector');
+// --- TikTok Webcast Listener ---
 const tiktokLive = new WebcastPushConnection(TIKTOK_USERNAME);
 
 tiktokLive.connect().then(state => {
-    console.log('Connected to TikTok LIVE');
+  console.log('✅ Connected to TikTok LIVE');
+  console.log('🔍 Stream state:', state);
+
+  isLive = true;
+  totalLikes = 0;
+  io.emit('liveStatus', { isLive, totalLikes });
 }).catch(err => {
-    console.error('Failed to connect to TikTok LIVE:', err);
+  console.error('❌ Failed to connect to TikTok LIVE:', err);
 });
 
-// --- TikTok LIVE event handlers ---
 tiktokLive.on('like', (msg) => {
   const user = msg.uniqueId || 'Anonymous';
-  const nickname = msg.nickname || user;    // (optional, for display)
+  const nickname = msg.nickname || user;
+  const count = msg.likeCount || msg.count || 1;
+  console.log(`❤️ ${nickname} liked ${count} times`);
 
-  totalLikes += 1;
-  leaderboard[user] = (leaderboard[user] || 0) + 1;
-  io.emit('likeUpdate', { totalLikes, username: user, nickname, likes: leaderboard[user] });
-  io.emit('sessionLeaderboard', leaderboard);
+
+  if (!allTimeLeaderboard[user]) allTimeLeaderboard[user] = { count: 0, nickname };
+  allTimeLeaderboard[user].count += count;
+  allTimeLeaderboard[user].nickname = nickname;
+
+  if (!sessionLeaderboard[user]) sessionLeaderboard[user] = { count: 0, nickname };
+  sessionLeaderboard[user].count += count;
+  sessionLeaderboard[user].nickname = nickname;
+
+  totalLikes += count;
+  saveLeaderboardToFile();
+
+  io.emit('likeUpdate', { totalLikes, username: user, nickname, likes: sessionLeaderboard[user].count });
+  io.emit('sessionLeaderboard', sessionLeaderboard);
+  io.emit('allTimeLeaderboard', allTimeLeaderboard);
 });
 
-// --- Socket.IO (real-time) ---
+tiktokLive.on('streamEnd', () => {
+  isLive = false;
+  totalLikes = 0;
+  sessionLeaderboard = {};
+  console.log('⚪ TikTok stream ended.');
+
+  io.emit('liveStatus', { isLive, totalLikes });
+  io.emit('sessionLeaderboard', sessionLeaderboard); // also reset leaderboard client-side
+});
+
+// --- Socket.IO ---
 io.on('connection', (socket) => {
   console.log('A user connected');
   socket.emit('liveStatus', { isLive, totalLikes });
-  socket.emit('sessionLeaderboard', leaderboard); // <--- add for initial page load
+  socket.emit('sessionLeaderboard', sessionLeaderboard);
+  socket.emit('allTimeLeaderboard', allTimeLeaderboard);
 
   socket.on('sendLike', (data) => {
-    console.log('Like from:', data.username);
+    const user = data.username || 'Anonymous';
+    const nickname = data.nickname || user;
+
+    if (!allTimeLeaderboard[user]) allTimeLeaderboard[user] = { count: 0, nickname };
+    allTimeLeaderboard[user].count += 1;
+    allTimeLeaderboard[user].nickname = nickname;
+
+    if (!sessionLeaderboard[user]) sessionLeaderboard[user] = { count: 0, nickname };
+    sessionLeaderboard[user].count += 1;
+    sessionLeaderboard[user].nickname = nickname;
+
     totalLikes += 1;
-    leaderboard[data.username] = (leaderboard[data.username] || 0) + 1;
-    io.emit('likeUpdate', { totalLikes, username: data.username, likes: leaderboard[data.username] });
-    io.emit('sessionLeaderboard', leaderboard);
+    saveLeaderboardToFile();
+
+    io.emit('likeUpdate', { totalLikes, username: user, nickname, likes: sessionLeaderboard[user].count });
+    io.emit('sessionLeaderboard', sessionLeaderboard);
+    io.emit('allTimeLeaderboard', allTimeLeaderboard);
   });
 
-// In socket.io 'subscribe-live' handler:
- socket.on('subscribe-live', () => {
+  socket.on('subscribe-live', () => {
     socket.emit('liveStatus', { isLive, totalLikes });
-    socket.emit('sessionLeaderboard', leaderboard); // <--- ensures instant data on reconnect
+    socket.emit('sessionLeaderboard', sessionLeaderboard);
+    socket.emit('allTimeLeaderboard', allTimeLeaderboard);
   });
 });
+app.get('/api/me', (req, res) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+  res.json(req.session.user);
+});
 
-// --- DB & SERVER ---
+// --- MongoDB + Server Start ---
 const PORT = process.env.PORT || 3000;
 mongoose.connect('mongodb://localhost:27017/nnj')
   .then(() => {
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  }).catch(err => {
-    console.error('MongoDB connection error:', err);
-  });
+    server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
+  .catch(err => console.error('❌ MongoDB connection error:', err));

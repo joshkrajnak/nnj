@@ -4,53 +4,63 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tournaments | NotNotJosh</title>
-  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Regular.woff2" rel="preload">
-  <link as="font" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/Inter-Medium.woff2" rel="preload">
+
+  <!-- Inter font -->
+
   <link as="style" crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="preload">
   <link crossorigin="anonymous" href="https://components.unrealengine.com/fonts/inter/index.css" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Particle Background -->
+  <div id="particles-js"></div>
+
   <header>
     <nav class="main-nav">
       <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
       <ul class="nav-links">
         <li><a href="/" class="nav-link">Live Stats</a></li>
         <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
-        <li><a href="/tournaments.html" class="nav-link active">Tournaments</a></li>
+        <li><a href="/tournament.html" class="nav-link active">Tournaments</a></li>
       </ul>
       <a href="https://tiktok.com/@notnotjosh_" target="_blank" class="notnotjosh-btn">NotNotJosh</a>
     </nav>
   </header>
-  <main>
-    <h1 class="tourney-main-header">Tournaments</h1>
-    <div class="tourney-rules-box">
-      <button class="tourney-rules-toggle" onclick="toggleRules()">Tournament Rules &#9660;</button>
-      <div class="tourney-rules-content" id="tourney-rules-content" style="display:none;">
-        <ul>
-          <li>You must be at least 13 years old to enter.</li>
-          <li>One entry per player, per tournament.</li>
-          <li>No cheating, exploiting, or unsportsmanlike behavior.</li>
-          <li>Prizes may be substituted, delayed, or withheld at our discretion.</li>
-          <li>We reserve the right to remove any participant or cancel the event at any time.</li>
-          <li>Full terms: <a href="/tos.html" target="_blank">Terms of Service</a></li>
-        </ul>
-      </div>
-      
-    </div>
-    <script>
-      function toggleRules() {
-        const content = document.getElementById('tourney-rules-content');
-        content.style.display = (content.style.display === "none") ? "block" : "none";
-      }
-    </script>
-    <div id="user-bar" style="text-align:right; margin-bottom:1rem;"></div>
-    <div id="tourney-list" class="tourney-list"></div>
-  </main>
 
+<main>
+  <h1 class="tourney-main-header">Tournaments</h1>
+
+<div class="tourney-rules-box tourney-box-style">
+  <div class="tourney-rules-bar">
+    <button class="tourney-rules-toggle" onclick="toggleRules()">
+      Tournament Rules <span id="rules-arrow" class="expand-arrow">&#9654;</span>
+    </button>
+    <div id="user-bar" class="tourney-user-bar">
+      <a href="#" ></a>
+    </div>
+  </div>
+
+  <!-- ✅ Content is part of the same box -->
+  <div class="tourney-rules-content" id="tourney-rules-content">
+    <ul>
+      <li>You must be at least 13 years old to enter.</li>
+      <li>One entry per player, per tournament.</li>
+      <li>No cheating, exploiting, or unsportsmanlike behavior.</li>
+      <li>Prizes may be substituted, delayed, or withheld at our discretion.</li>
+      <li>We reserve the right to remove any participant or cancel the event at any time.</li>
+      <li>Full terms: <a href="/tos.html" target="_blank">Terms of Service</a></li>
+    </ul>
+  </div>
+</div>
+
+  <!-- ✅ Bracket Background Wrap -->
+  <div class="bracket-wrapper tourney-box-style">
+    <div id="tourney-list" class="tourney-list"></div>
+  </div>
   <!-- Join Modal -->
   <div id="join-modal" class="join-modal" style="display:none;">
-    <div class="join-modal-content">
+    <div class="join-modal-content tourney-box-style">
       <span id="close-modal" class="join-modal-close" aria-label="Close">&times;</span>
       <h2 class="modal-title">Join Tournament</h2>
       <div class="modal-note">
@@ -72,6 +82,7 @@
       </form>
     </div>
   </div>
+  </main>
 
   <div id="footer-include"></div>
   <script>
@@ -79,7 +90,14 @@
       .then(res => res.text())
       .then(html => document.getElementById('footer-include').innerHTML = html);
   </script>
-  <script src="tournaments.js"></script>
-  <script src="main.js"></script>
+
+  <!-- Bracket & Tournament Logic -->
+  <script src="/tournaments.js"></script>
+  <script src="/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    particlesJS.load('particles-js', '/particles.json', function() {});
+
+  </script>
 </body>
 </html>

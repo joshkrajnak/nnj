@@ -1,0 +1,66 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tournament Admin</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <nav class="main-nav">
+      <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
+      <ul class="nav-links">
+        <li><a href="/index.html" class="nav-link">Live Stats</a></li>
+        <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
+        <li><a href="/tournaments.html" class="nav-link active">Tournaments</a></li>
+      </ul>
+    
+      <button id="logoutBtn" class="notnotjosh-btn">Logout</button>
+    </nav>
+  </header>
+
+  <div class="container">
+
+  <section class="live-admin">
+  <h2>Live Admin</h2>
+
+<div class="live-toggle-wrapper">
+  <label class="switch">
+    <input type="checkbox" id="live-toggle">
+    <span class="slider"></span>
+  </label>
+<span id="live-status-label" class="live-status-label">Offline</span>
+</div>
+
+  <button id="reset-live-stats" class="admin-btn">Reset Live Stats</button>
+</section>
+<hr style="margin: 2rem auto;"/>
+
+    <h1 class="admin-title">Tournament Admin</h1>
+    <!-- Create Tournament -->
+    <h2>Create Tournament</h2>
+    <form id="new-tourney-form" class="admin-form">
+      <input id="new-tourney-name" class="admin-input" placeholder="Tournament Name" required>
+      <input id="new-tourney-description" class="admin-input" placeholder="Description (optional)">
+      <input id="new-tourney-date" class="admin-input" type="date" placeholder="Date (optional)">
+      <button type="submit" class="admin-btn">Create</button>
+    </form>
+
+
+  <div class="admin-container">
+    
+    <h2>Tournaments</h2>
+    <ul id="admin-tournament-list" class="admin-tourney-list"></ul>
+    <div id="admin-snackbar" class="admin-snackbar"></div>
+  </div>
+
+  <div id="admin-snackbar" class="admin-snackbar"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="admin.js"></script>
+
+</body>
+</html>
+

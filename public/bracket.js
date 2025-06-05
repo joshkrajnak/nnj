@@ -2,6 +2,7 @@
 // Shared bracket rendering for admin & public views
 
 export function renderBracket(tournament, opts = {}) {
+  
   const { adminMode = false, onSetWinner = () => {} } = opts;
   if (!tournament.rounds || !tournament.rounds.length) {
     return `<div class="bracket-empty">No bracket generated yet.</div>`;

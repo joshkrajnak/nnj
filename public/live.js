@@ -16,16 +16,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.innerHTML = html;
   }
 
-  // Renders the leaderboard using current session data
+  // Renders the leaderboard using current session data (sessionLeaderboard)
   function renderSession(leaderboard) {
     const users = Object.entries(leaderboard)
-      .map(([username, likes]) => ({ username, likes }))
+      .map(([username, obj]) => ({
+        username,
+        nickname: (obj && obj.nickname) || username,
+        likes: (obj && obj.count) || obj || 0
+      }))
       .sort((a, b) => b.likes - a.likes);
-
+if (users.length === 0) {
+  safeRender('session-body', `<tr><td colspan="3">No likes yet. Be the first to tap ❤️!</td></tr>`);
+  return;
+}
     const rows = users.map((u, i) => `
       <tr>
         <td>${i + 1}</td>
-        <td>${u.username}</td>
+        <td>${u.nickname} <span style="font-size:0.85em;color:#888;">@${u.username}</span></td>
         <td>${u.likes.toLocaleString()}</td>
       </tr>
     `).join('');
@@ -40,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (likeEl) likeEl.innerText = (totalLikes || 0).toLocaleString();
   });
 
-  // Listen for session leaderboard updates
+  // Listen for session leaderboard (this is the live leaderboard)
   socket.on('sessionLeaderboard', leaderboard => {
     renderSession(leaderboard);
   });
@@ -51,6 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (likeEl && typeof data.totalLikes === 'number')
       likeEl.innerText = data.totalLikes.toLocaleString();
   });
+
+socket.on('sessionLeaderboard', leaderboard => {
+  console.log('Received sessionLeaderboard:', leaderboard);
+  renderSession(leaderboard);
+});
 
   // Initial subscription to live session updates
   socket.emit('subscribe-live');

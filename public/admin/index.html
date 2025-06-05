@@ -2,45 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tournament Admin</title>
-  <link rel="stylesheet" href="../style.css">
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header>
-    <nav class="main-nav">
-      <button class="nav-toggle" aria-label="Toggle menu"><span></span></button>
-      <ul class="nav-links">
-        <li><a href="/index.html" class="nav-link">Live Stats</a></li>
-        <li><a href="/leaderboard.html" class="nav-link">Leaderboard</a></li>
-        <li><a href="/tournaments.html" class="nav-link active">Tournaments</a></li>
-      </ul>
-    
-      <button id="logoutBtn" class="notnotjosh-btn">Logout</button>
-    </nav>
-  </header>
-
-  <div class="container">
-    <h1 class="admin-title">Tournament Admin</h1>
-
-
-    <!-- Create Tournament -->
-    <h2>Create Tournament</h2>
-    <form id="new-tourney-form" class="admin-form">
-      <input id="new-tourney-name" class="admin-input" placeholder="Tournament Name" required>
-      <input id="new-tourney-description" class="admin-input" placeholder="Description (optional)">
-      <input id="new-tourney-date" class="admin-input" type="date" placeholder="Date (optional)">
-      <button type="submit" class="admin-btn">Create</button>
+  <div class="admin-login-wrapper">
+    <h1>Admin Login</h1>
+    <form id="login-form">
+      <input type="text" placeholder="Username" name="username" required />
+      <input type="password" placeholder="Password" name="password" required />
+      <button type="submit">Login</button>
     </form>
-
-    <h2>Tournaments</h2>
-    <ul id="admin-tournament-list" class="admin-tourney-list"></ul>
-    <div id="admin-detail" class="admin-detail"></div>
+    <p id="error-msg" style="color:red;"></p>
   </div>
+<script>
+document.getElementById("login-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const res = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", // <-- this is crucial!
+    body: JSON.stringify({
+      username: form.username.value,
+      password: form.password.value
+    })
+  });
 
-  <div id="admin-snackbar" class="admin-snackbar"></div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script type="module" src="admin.js"></script>
+  if (res.ok) {
+    window.location.href = "/admin/admin.html";
+  } else {
+    document.getElementById("error-msg").textContent = "Invalid credentials.";
+  }
+};
+</script>
 
 </body>
 </html>
