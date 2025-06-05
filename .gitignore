@@ -25,3 +25,6 @@ yarn-error.log*
 
 # Optional build output
 /dist
+node_modules/
+.env
+best-likes.json
