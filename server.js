@@ -7,7 +7,7 @@ const http = require('http');
 const session = require('express-session');
 const { Server } = require('socket.io');
 const Tournament = require('./models/Tournament');
-const { WebcastPushConnection } = require('tiktok-live-connector');
+
 
 const app = express();
 const server = http.createServer(app);
@@ -21,6 +21,9 @@ let isLive = false;
 let totalLikes = 0;
 let sessionLeaderboard = {};
 let allTimeLeaderboard = {};
+
+
+
 const bestLikesPath = path.join(__dirname, 'best-likes.json');
 
 if (fs.existsSync(bestLikesPath)) {
@@ -234,40 +237,51 @@ function generateSingleElimBracket(players) {
 }
 
 // --- TikTok Webcast Listener ---
+const { WebcastPushConnection } = require('tiktok-live-connector');
+let likeCounts = {};
+
 const tiktokLive = new WebcastPushConnection(TIKTOK_USERNAME);
 
 tiktokLive.connect().then(state => {
-  console.log('✅ Connected to TikTok LIVE');
-  console.log('🔍 Stream state:', state);
-
   isLive = true;
   totalLikes = 0;
+  sessionLeaderboard = {};
+  console.log(`✅ Connected to roomId ${state.roomId}`);
   io.emit('liveStatus', { isLive, totalLikes });
 }).catch(err => {
-  console.error('❌ Failed to connect to TikTok LIVE:', err);
+  console.error("❌ Failed to connect:", err);
 });
 
-tiktokLive.on('like', (msg) => {
-  const user = msg.uniqueId || 'Anonymous';
-  const nickname = msg.nickname || user;
-  const count = msg.likeCount || msg.count || 1;
-  console.log(`❤️ ${nickname} liked ${count} times`);
-
-
-  if (!allTimeLeaderboard[user]) allTimeLeaderboard[user] = { count: 0, nickname };
-  allTimeLeaderboard[user].count += count;
-  allTimeLeaderboard[user].nickname = nickname;
+tiktokLive.on('like', data => {
+  const user = data.uniqueId || 'Anonymous';
+  const nickname = data.nickname || user;
+  const count = data.likeCount || 1;
 
   if (!sessionLeaderboard[user]) sessionLeaderboard[user] = { count: 0, nickname };
   sessionLeaderboard[user].count += count;
   sessionLeaderboard[user].nickname = nickname;
 
+  if (!allTimeLeaderboard[user]) allTimeLeaderboard[user] = { count: 0, nickname };
+  allTimeLeaderboard[user].count += count;
+  allTimeLeaderboard[user].nickname = nickname;
+
   totalLikes += count;
   saveLeaderboardToFile();
+
+  console.log(`❤️ ${nickname} liked ${count} times`);
 
   io.emit('likeUpdate', { totalLikes, username: user, nickname, likes: sessionLeaderboard[user].count });
   io.emit('sessionLeaderboard', sessionLeaderboard);
   io.emit('allTimeLeaderboard', allTimeLeaderboard);
+});
+
+tiktokLive.on('streamEnd', () => {
+  isLive = false;
+  totalLikes = 0;
+  sessionLeaderboard = {};
+  console.log('⚪ TikTok stream ended.');
+  io.emit('liveStatus', { isLive, totalLikes });
+  io.emit('sessionLeaderboard', sessionLeaderboard);
 });
 
 tiktokLive.on('streamEnd', () => {

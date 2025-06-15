@@ -36,18 +36,24 @@
   </header>
 
   <main>
-
     <h1 class="tourney-main-header">Live Stats</h1>
     <section class="hero">
       <div id="live-status" class="live-status" style="font-size:1.25em;margin-bottom:8px;">
         <span class="live-dot" style="background:gray"></span> Offline
       </div>
+
       <div class="tiktok-handle" style="margin-bottom:16px;">
         TikTok: <a href="https://tiktok.com/@notnotjosh_" target="_blank">@notnotjosh_</a>
       </div>
+
       <div class="live-total-likes" style="font-size:1.2em; margin-bottom:16px;">
-        Total Likes: <span id="likeCount">0</span>
+        <div class="like-burst-wrapper">
+          Total Likes: <span id="likeCount">0</span>
+          <div id="likeExplosionContainer"></div>
+        </div>
+        <p class="golden-user">Spam 3,000 Likes or Gift to play a round!</p>
       </div>
+
       <!-- SESSION LEADERBOARD -->
       <div class="live-leaderboard">
         <table>
@@ -72,15 +78,13 @@
       .then(res => res.text())
       .then(html => document.getElementById('footer-include').innerHTML = html);
   </script>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="live.js"></script>
   <script src="main.js"></script>  
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
-    particlesJS.load('particles-js', '/particles.json', function() {
-
-    });
+    particlesJS.load('particles-js', '/particles.json', function() {});
   </script>
-
 </body>
 </html>

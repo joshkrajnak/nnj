@@ -13,14 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }))
       .sort((a, b) => b.likes - a.likes)
       .slice(0, 30);
-
-    const rows = users.map((u, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${u.nickname} <span style="font-size:0.85em;color:#888;">@${u.username}</span></td>
-        <td>${u.likes.toLocaleString()}</td>
-      </tr>
-    `).join('');
+      const rows = users.map((u, i) => {
+        const isTop = i === 0;
+        const crown = isTop ? ' 👑' : '';
+        return `
+          <tr class="${isTop ? 'glow-row golden-leader' : ''}">
+             <td>${i + 1}${crown}</td>
+            <td>${u.nickname} - @${u.username}</td>
+            <td>${u.likes.toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
     if (tbody) tbody.innerHTML = rows;
   }
 
