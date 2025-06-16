@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!user) {
       userBar.innerHTML = `
         <!--<a href="/auth/tiktok" class="tourney-join-btn" style="font-size:1em; margin-top:5px;">Click here to register</a>-->
-        <a href="" class="tourney-join-btn" style="font-size:1em; margin-top:5px;">Click here to register</a>
+        <!--<a href="" class="tourney-join-btn" style="font-size:1em; margin-top:5px;">Click here to register</a>-->
+        <button onclick="window.location.href='/auth/tiktok'" class="tourney-join-btn" style="font-size:1em; margin-top:5px;"><img src="/images/tiktok-icon-2.svg" alt="TikTok" class="footer-icon" />Login with TikTok</button>
       `;
     } else {
       userBar.innerHTML = `

@@ -13,9 +13,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+
 const ADMIN_USER = process.env.ADMIN_USER;
 const ADMIN_PASS = process.env.ADMIN_PASS;
 const TIKTOK_USERNAME = process.env.TIKTOK_USERNAME || 'notnotjosh_';
+
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
 
 let isLive = false;
 let totalLikes = 0;
